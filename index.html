@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#171329">
+<title>Ma bibliothèque musicale</title>
+<style>
+* { box-sizing: border-box; }
+body {
+  margin: 0; min-height: 100vh; padding: 28px 16px;
+  background: radial-gradient(circle at top, #34264d, #171329 58%);
+  color: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+}
+.container { max-width: 680px; margin: 0 auto; }
+header { text-align: center; margin: 12px 0 26px; }
+header .note { font-size: 44px; }
+h1 { margin: 8px 0; font-size: clamp(25px, 6vw, 34px); }
+.subtitle { color: #c5bdd8; margin: 0; }
+.search {
+  width: 100%; padding: 15px 16px; margin: 0 0 18px;
+  border: 1px solid #594b73; border-radius: 14px;
+  background: #28213d; color: white; font-size: 16px; outline: none;
+}
+.search::placeholder { color: #aaa0bd; }
+.player {
+  background: linear-gradient(145deg, #35294d, #241d36);
+  border: 1px solid #514267; border-radius: 22px;
+  padding: 22px; text-align: center; box-shadow: 0 14px 35px #08061166;
+}
+.cover {
+  width: 138px; height: 138px; margin: 2px auto 18px;
+  display: grid; place-items: center; border-radius: 20px;
+  background: linear-gradient(135deg, #9b79dc, #49366f);
+  font-size: 64px; box-shadow: 0 10px 24px #09061266;
+}
+#songTitle { font-size: 21px; font-weight: 700; overflow-wrap: anywhere; }
+#artist { color: #c5bdd8; margin: 7px 0 14px; }
+audio { width: 100%; margin: 8px 0 12px; }
+.controls { display: flex; justify-content: center; align-items: center; gap: 13px; }
+button {
+  border: 0; border-radius: 13px; padding: 12px 16px;
+  background: #8d70d0; color: white; font-size: 16px; cursor: pointer;
+}
+.controls button {
+  width: 48px; height: 48px; padding: 0; border-radius: 50%;
+  background: #51406f; font-size: 20px;
+}
+.controls button.main { width: 56px; height: 56px; background: #9b7be0; font-size: 23px; }
+button.active { outline: 2px solid #d7c6ff; background: #7658b8; }
+h2 { margin: 27px 3px 12px; font-size: 19px; }
+.song-list { display: grid; gap: 9px; }
+.song {
+  display: flex; align-items: center; gap: 12px;
+  padding: 13px; border-radius: 14px; background: #28213d;
+  border: 1px solid transparent; cursor: pointer;
+}
+.song.selected { border-color: #a98be8; background: #3c3056; }
+.song .symbol { font-size: 23px; }
+.song .details { min-width: 0; flex: 1; }
+.song strong { display: block; overflow-wrap: anywhere; }
+.song small { display: block; color: #b9afcb; margin-top: 4px; }
+.song button { padding: 9px 12px; }
+footer { text-align: center; color: #aaa0bd; font-size: 12px; margin: 28px 0 8px; }
+.notice { color: #d8cdef; font-size: 13px; line-height: 1.5; margin-top: 13px; }
+</style>
+</head>
+<body>
+<main class="container">
+  <header>
+    <div class="note">🎧</div>
+    <h1>Ma bibliothèque musicale</h1>
+    <p class="subtitle">Ma musique, partout avec moi ❤️</p>
+  </header>
+
+  <input id="search" class="search" type="search" placeholder="🔎 Rechercher une chanson..." aria-label="Rechercher une chanson">
+
+  <section class="player" aria-label="Lecteur musical">
+    <div class="cover">🎵</div>
+    <div id="songTitle">Choisis une chanson</div>
+    <div id="artist">Ta bibliothèque personnelle</div>
+    <audio id="audio" controls preload="none"></audio>
+    <div class="controls">
+      <button type="button" onclick="previousSong()" aria-label="Chanson précédente">⏮</button>
+      <button type="button" id="shuffleButton" onclick="toggleShuffle()" aria-label="Lecture aléatoire">🔀</button>
+      <button type="button" class="main" onclick="togglePlay()" id="playButton" aria-label="Lecture ou pause">▶</button>
+      <button type="button" id="repeatButton" onclick="toggleRepeat()" aria-label="Répéter">🔁</button>
+      <button type="button" onclick="nextSong()" aria-label="Chanson suivante">⏭</button>
+    </div>
+    <p class="notice">Astuce : choisis une chanson dans la liste, puis utilise les commandes du lecteur pour écouter, mettre en pause ou avancer.</p>
+  </section>
+
+  <h2>🎼 Mes chansons</h2>
+  <div id="playlist" class="song-list"></div>
+  <footer>Bibliothèque musicale personnelle</footer>
+</main>
+
+<script>
+/*
+  Les noms ci-dessous correspondent exactement aux fichiers visibles
+  dans ton dépôt GitHub, dossier "musique".
+  Si tu renommes un MP3, modifie aussi son nom ici.
+*/
+const songs = [
+  { title: "Chanson 1", artist: "Ma musique", file: "musique/chanson-1.mp3.mp3" },
+  { title: "Chanson 2", artist: "Ma musique", file: "musique/chanson-2.mp3.mp3" },
+  { title: "Chanson 3", artist: "Ma musique", file: "musique/chanson-3.mp3.mp3" },
+  { title: "Chanson 4", artist: "Ma musique", file: "musique/chanson-4.mp3.mp3" },
+  { title: "Chanson 5", artist: "Ma musique", file: "musique/chanson-5.mp3" },
+  { title: "Chanson 6", artist: "Ma musique", file: "musique/chanson-6.mp3.mp3" },
+  { title: "Chanson 7", artist: "Ma musique", file: "musique/chanson-7.mp3.mp3" },
+  { title: "Chanson 8", artist: "Ma musique", file: "musique/chanson-8.mp3.wav" }
+];
+
+const audio = document.getElementById("audio");
+const playlist = document.getElementById("playlist");
+const playButton = document.getElementById("playButton");
+let currentIndex = 0;
+let shuffle = false;
+let repeat = false;
+
+function loadSong(index, autoplay = true) {
+  if (!songs.length) return;
+  currentIndex = (index + songs.length) % songs.length;
+  const song = songs[currentIndex];
+  audio.src = song.file;
+  document.getElementById("songTitle").textContent = song.title;
+  document.getElementById("artist").textContent = song.artist;
+  renderPlaylist();
+  playButton.textContent = autoplay ? "Ⅱ" : "▶";
+  if (autoplay) {
+    audio.play().catch(() => {
+      playButton.textContent = "▶";
+      alert("La chanson ne démarre pas. Vérifie que le fichier est bien téléversé dans le dossier musique et que son nom correspond exactement.");
+    });
+  }
+}
+
+function renderPlaylist() {
+  const query = document.getElementById("search").value.trim().toLowerCase();
+  playlist.innerHTML = "";
+  songs.forEach((song, index) => {
+    if (!song.title.toLowerCase().includes(query) &&
+        !song.artist.toLowerCase().includes(query)) return;
+
+    const item = document.createElement("div");
+    item.className = "song" + (index === currentIndex ? " selected" : "");
+    const symbol = document.createElement("span");
+    symbol.className = "symbol";
+    symbol.textContent = "♫";
+
+    const details = document.createElement("div");
+    details.className = "details";
+    const title = document.createElement("strong");
+    title.textContent = song.title;
+    const artist = document.createElement("small");
+    artist.textContent = song.artist;
+    details.append(title, artist);
+
+    const button = document.createElement("button");
+    button.type = "button";
+    button.textContent = index === currentIndex && !audio.paused ? "Pause" : "Écouter";
+    button.addEventListener("click", (event) => {
+      event.stopPropagation();
+      if (index === currentIndex) togglePlay();
+      else loadSong(index);
+    });
+
+    item.addEventListener("click", () => {
+      if (index === currentIndex) togglePlay();
+      else loadSong(index);
+    });
+    item.append(symbol, details, button);
+    playlist.appendChild(item);
+  });
+}
+
+function togglePlay() {
+  if (!audio.src) {
+    loadSong(currentIndex);
+  } else if (audio.paused) {
+    audio.play().catch(() => {});
+  } else {
+    audio.pause();
+  }
+}
+
+function nextSong() {
+  if (shuffle && songs.length > 1) {
+    let next;
+    do { next = Math.floor(Math.random() * songs.length); }
+    while (next === currentIndex);
+    loadSong(next);
+  } else {
+    loadSong(currentIndex + 1);
+  }
+}
+
+function previousSong() {
+  if (audio.currentTime > 3) audio.currentTime = 0;
+  else loadSong(currentIndex - 1);
+}
+
+function toggleShuffle() {
+  shuffle = !shuffle;
+  document.getElementById("shuffleButton").classList.toggle("active", shuffle);
+}
+
+function toggleRepeat() {
+  repeat = !repeat;
+  audio.loop = repeat;
+  document.getElementById("repeatButton").classList.toggle("active", repeat);
+}
+
+audio.addEventListener("play", () => { playButton.textContent = "Ⅱ"; renderPlaylist(); });
+audio.addEventListener("pause", () => { playButton.textContent = "▶"; renderPlaylist(); });
+audio.addEventListener("ended", () => { if (!repeat) nextSong(); });
+document.getElementById("search").addEventListener("input", renderPlaylist);
+
+renderPlaylist();
+loadSong(0, false);
+</script>
+</body>
+</html>
